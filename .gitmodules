@@ -1,0 +1,3 @@
+[submodule "vendor/tinybone"]
+	path = vendor/tinybone
+	url = https://github.com/sergeyksv/tinybone

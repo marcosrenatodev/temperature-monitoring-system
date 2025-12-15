@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{title}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 28px;
+        }
+
+        .timestamp {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .sensors-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .sensor-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .sensor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .sensor-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .sensor-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .sensor-id {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+
+        .sensor-location {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .readings {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .reading {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .reading-label {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .reading-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .temp-value {
+            color: #e74c3c;
+        }
+
+        .humidity-value {
+            color: #3498db;
+        }
+
+        .reading-unit {
+            font-size: 16px;
+            color: #999;
+        }
+
+        .thresholds {
+            font-size: 12px;
+            color: #666;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .thresholds strong {
+            color: #333;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+            font-style: italic;
+        }
+
+        .alerts-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .alerts-section h2 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .alert-item {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .alert-sensor {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .alert-time {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .alert-message {
+            color: #856404;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>{title}</h1>
+            <div class="timestamp">Last updated: {timestamp}</div>
+        </header>
+
+        <div class="stats">
+            <div class="stat-card">
+                <h3>Total Sensors</h3>
+                <div class="value">{sensors.length}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Recent Alerts</h3>
+                <div class="value">{alerts.length}</div>
+            </div>
+        </div>
+
+        <div class="sensors-grid">
+            {#sensors}
+            <div class="sensor-card">
+                <div class="sensor-header">
+                    <div class="sensor-name">{name}</div>
+                    <span class="sensor-status {?active}status-active{:else}status-inactive{/active}">
+                        {?active}Active{:else}Inactive{/active}
+                    </span>
+                </div>
+
+                <div class="sensor-id">ID: {sensor_id}</div>
+                {?location}
+                <div class="sensor-location">📍 {location}</div>
+                {/location}
+
+                {?latest_reading}
+                <div class="readings">
+                    <div class="reading">
+                        <div class="reading-label">Temperature</div>
+                        <div class="reading-value temp-value">
+                            {latest_reading.temperature}<span class="reading-unit">°C</span>
+                        </div>
+                    </div>
+                    <div class="reading">
+                        <div class="reading-label">Humidity</div>
+                        <div class="reading-value humidity-value">
+                            {latest_reading.humidity}<span class="reading-unit">%</span>
+                        </div>
+                    </div>
+                </div>
+                {:else}
+                <div class="no-data">No readings available</div>
+                {/latest_reading}
+
+                <div class="thresholds">
+                    <strong>Limits:</strong><br>
+                    🌡️ {min_temperature}°C - {max_temperature}°C<br>
+                    💧 {min_humidity}% - {max_humidity}%
+                </div>
+            </div>
+            {:else}
+            <div class="no-data">No sensors registered</div>
+            {/sensors}
+        </div>
+
+        <div class="alerts-section">
+            <h2>Recent Alerts (Last Hour)</h2>
+            {#alerts}
+            <div class="alert-item">
+                <div class="alert-header">
+                    <span class="alert-sensor">Sensor: {sensor_id}</span>
+                    <span class="alert-time">{created_at}</span>
+                </div>
+                <div class="alert-message">{message}</div>
+            </div>
+            {:else}
+            <div class="no-data">No recent alerts</div>
+            {/alerts}
+        </div>
+    </div>
+
+    <script>
+        // Auto-refresh every 30 seconds
+        setTimeout(() => {
+            location.reload();
+        }, 30000);
+    </script>
+</body>
+</html>

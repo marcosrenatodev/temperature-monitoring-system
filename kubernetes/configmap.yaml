@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: temperature-monitoring
+data:
+  # Database
+  POSTGRES_HOST: "postgres-service"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "temperature_monitoring"
+
+  # RabbitMQ
+  RABBITMQ_HOST: "rabbitmq-service"
+  RABBITMQ_PORT: "5672"
+  RABBITMQ_QUEUE_SENSOR_DATA: "sensor_data"
+
+  # Services
+  API_PORT: "3000"
+  SENSOR_SERVICE_PORT: "3001"
+  NOTIFICATION_SERVICE_PORT: "3002"
+  SENSOR_INTERVAL_MS: "5000"
+  API_PRINCIPAL_URL: "http://api-principal-service:3000"
+
+  # Environment
+  NODE_ENV: "production"
+  LOG_LEVEL: "info"
+
+---
