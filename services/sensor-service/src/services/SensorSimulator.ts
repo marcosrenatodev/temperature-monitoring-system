@@ -28,7 +28,15 @@ export class SensorSimulator {
       const response = await axios.get(`${this.apiUrl}/api/sensors`);
 
       if (response.data.success) {
-        this.sensors = response.data.data.filter((s: Sensor) => s.active);
+        this.sensors = response.data.data
+        .filter((s: Sensor) => s.active)
+        .map((s: any) => ({
+          ...s,
+          min_temperature: Number(s.min_temperature),
+          max_temperature: Number(s.max_temperature),
+          min_humidity: Number(s.min_humidity),
+          max_humidity: Number(s.max_humidity),
+        }));
         logger.info(`Fetched ${this.sensors.length} active sensors`);
       }
     } catch (error) {
@@ -37,6 +45,12 @@ export class SensorSimulator {
   }
 
   private generateReading(sensor: Sensor) {
+    if (
+      Number.isNaN(sensor.min_temperature) ||
+      Number.isNaN(sensor.max_temperature)
+    ) {
+      throw new Error(`Invalid numeric configuration for sensor ${sensor.sensor_id}`);
+    }
     // Generate temperature within sensor limits with some variation
     const tempRange = sensor.max_temperature - sensor.min_temperature;
     const tempVariation = tempRange * 0.3; // 30% variation range
@@ -48,8 +62,8 @@ export class SensorSimulator {
 
     if (shouldExceedTemp) {
       temperature = Math.random() < 0.5
-        ? sensor.min_temperature - Math.random() * 5
-        : sensor.max_temperature + Math.random() * 5;
+      ? sensor.min_temperature - Math.random() * 5
+      : sensor.max_temperature + Math.random() * 5;
     } else {
       temperature = tempCenter + (Math.random() - 0.5) * tempVariation;
     }
@@ -64,8 +78,8 @@ export class SensorSimulator {
 
     if (shouldExceedHum) {
       humidity = Math.random() < 0.5
-        ? sensor.min_humidity - Math.random() * 10
-        : sensor.max_humidity + Math.random() * 10;
+      ? sensor.min_humidity - Math.random() * 10
+      : sensor.max_humidity + Math.random() * 10;
     } else {
       humidity = humCenter + (Math.random() - 0.5) * humVariation;
     }
