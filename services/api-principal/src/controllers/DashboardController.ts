@@ -5,7 +5,7 @@ import { AlertModel } from '../models/Alert';
 import { logger } from '../config/logger';
 
 export class DashboardController {
-  static async renderDashboard(req: Request, res: Response): Promise<void> {
+  static async renderDashboard(_req: Request, res: Response): Promise<void> {
     try {
       const sensors = await SensorModel.findAll();
       const latestReadings = await ReadingModel.getLatestReadingsGrouped();
@@ -31,7 +31,7 @@ export class DashboardController {
     }
   }
 
-  static async getStats(req: Request, res: Response): Promise<void> {
+  static async getStats(_req: Request, res: Response): Promise<void> {
     try {
       const sensors = await SensorModel.findAll();
       const activeSensors = sensors.filter(s => s.active);

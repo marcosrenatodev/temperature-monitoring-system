@@ -1,15 +1,16 @@
 import 'express-async-errors';
+import express from 'express';
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
+import cors from 'cors';
+import http from 'http';
 
 dotenv.config();
 
+// IIFE Structure - TinyBone pattern (using Express as base since TinyBone is just a thin wrapper)
 (function() {
-  const express = require('express');
-  const tinybone = require('tinybone');
   const dust = require('dustjs-linkedin');
-  const cors = require('cors');
 
   const { logger } = require('./config/logger');
   const routes = require('./routes/index').default;
@@ -18,59 +19,83 @@ dotenv.config();
   const app = express();
   const PORT = process.env.API_PORT || 3000;
 
+  // --- Static assets (TinyBone is client-side: served to the browser, never required in Node) ---
+  // In dev (ts-node), __dirname points to /src. In prod (dist), __dirname points to /dist.
+  const staticPublicPath = path.join(__dirname, 'public');
+  if (fs.existsSync(staticPublicPath)) {
+    app.use('/static', express.static(staticPublicPath));
+  }
+
+  // TinyBone vendor path:
+  // - dev: repo-root/vendor/tinybone
+  // - prod: dist/public/vendor/tinybone (copied by Dockerfile)
+  const repoRootVendorTinybone = path.resolve(__dirname, '../../../vendor/tinybone');
+  const distVendorTinybone = path.join(staticPublicPath, 'vendor', 'tinybone');
+  const tinybonePath = fs.existsSync(distVendorTinybone)
+    ? distVendorTinybone
+    : (fs.existsSync(repoRootVendorTinybone) ? repoRootVendorTinybone : null);
+  if (tinybonePath) {
+    app.use('/vendor/tinybone', express.static(tinybonePath));
+  }
+
   // Middleware
   app.use(cors());
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
   // Request logging middleware
-  app.use((req: any, res: any, next: any) => {
+  app.use((req: any, _res: any, next: any) => {
     logger.info(`${req.method} ${req.path}`);
     next();
   });
 
   // Configure DustJS
-  dust.config.cache = false;
+  // dust.config.cache = false;
 
-  const viewsPath = path.join(__dirname, 'views');
+  const viewsPath = path.join(process.cwd(), 'views');
 
   // Load dust templates
-  const loadTemplates = () => {
-    const templateFiles = fs.readdirSync(viewsPath);
-    templateFiles.forEach((file) => {
-      if (file.endsWith('.dust')) {
-        const templateName = file.replace('.dust', '');
-        const templatePath = path.join(viewsPath, file);
-        const templateContent = fs.readFileSync(templatePath, 'utf8');
-        const compiled = dust.compile(templateContent, templateName);
-        dust.loadSource(compiled);
-        logger.info(`Template loaded: ${templateName}`);
-      }
-    });
-  };
+  // const loadTemplates = () => {
+  //   if (!fs.existsSync(viewsPath)) {
+  //     logger.warn(`Views directory not found: ${viewsPath}`);
+  //     return;
+  //   }
 
-  loadTemplates();
+  //   const templateFiles = fs.readdirSync(viewsPath);
+  //   templateFiles.forEach((file) => {
+  //     if (file.endsWith('.dust')) {
+  //       const templateName = file.replace('.dust', '');
+  //       const templatePath = path.join(viewsPath, file);
+  //       const templateContent = fs.readFileSync(templatePath, 'utf8');
+  //       const compiled = dust.compile(templateContent, templateName);
+  //       dust.loadSource(compiled);
+  //       logger.info(`Template loaded: ${templateName}`);
+  //     }
+  //   });
+  // };
+
+  // loadTemplates();
 
   // Custom render function for Dust
   app.engine('dust', (filePath: string, options: any, callback: any) => {
-    const templateName = path.basename(filePath, '.dust');
-    dust.render(templateName, options, callback);
+  try {
+    const templateContent = fs.readFileSync(filePath, 'utf8');
+
+    // Render direto da source: não depende de registry/cache
+    dust.renderSource(templateContent, options, callback);
+  } catch (err) {
+    callback(err);
+  }
   });
 
   app.set('view engine', 'dust');
   app.set('views', viewsPath);
 
-  // TinyBone initialization
-  const server = tinybone();
-
-  // Mount Express app on TinyBone
-  server.use(app);
-
   // Routes
   app.use('/', routes);
 
   // Error handling middleware
-  app.use((err: any, req: any, res: any, next: any) => {
+  app.use((err: any, _req: any, res: any, _next: any) => {
     logger.error('Unhandled error:', err);
     res.status(500).json({
       success: false,
@@ -80,12 +105,15 @@ dotenv.config();
   });
 
   // 404 handler
-  app.use((req: any, res: any) => {
+  app.use((_req: any, res: any) => {
     res.status(404).json({
       success: false,
       error: 'Route not found'
     });
   });
+
+  // Create HTTP server (TinyBone-compatible approach)
+  const server = http.createServer(app);
 
   // Database connection check
   const checkDatabase = async () => {
@@ -131,7 +159,7 @@ dotenv.config();
 
       server.listen(PORT, () => {
         logger.info('=================================');
-        logger.info(`🚀 API Principal started`);
+        logger.info(`🚀 API Principal started (TinyBone/Express)`);
         logger.info(`📡 Server: http://localhost:${PORT}`);
         logger.info(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
         logger.info(`📊 Dashboard: http://localhost:${PORT}/`);

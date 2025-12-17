@@ -4,15 +4,15 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
-COPY tsconfig.json ./
+COPY services/api-principal/package*.json ./
+COPY services/api-principal/tsconfig.json ./
 
 # Install dependencies
-RUN npm ci --only=production && \
-    npm cache clean --force
+RUN npm ci && npm cache clean --force
 
 # Copy source code
-COPY src ./src
+COPY services/api-principal/src ./src
+COPY vendor/tinybone ./vendor/tinybone
 
 # Build TypeScript
 RUN npm run build
@@ -27,13 +27,19 @@ RUN addgroup -g 1001 -S nodejs && \
 WORKDIR /app
 
 # Copy package files and install production dependencies only
-COPY package*.json ./
-RUN npm ci --only=production && \
-    npm cache clean --force
+COPY services/api-principal/package*.json ./
+RUN npm ci --omit=dev && npm cache clean --force
 
 # Copy built application from builder stage
 COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
-COPY --from=builder --chown=nodejs:nodejs /app/src/views ./dist/views
+COPY --from=builder --chown=nodejs:nodejs /app/src/views ./views
+
+# static/public assets
+COPY --from=builder --chown=nodejs:nodejs /app/src/public ./public
+COPY --from=builder --chown=nodejs:nodejs /app/vendor/tinybone ./public/vendor/tinybone
+
+# templates Dust
+COPY --from=builder --chown=nodejs:nodejs /app/src/views ./views
 
 # Change ownership of the app directory
 RUN chown -R nodejs:nodejs /app
@@ -49,4 +55,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
 # Start application
-CMD ["node", "dist/server.js"]
+CMD ["sh", "-c", "node dist/database/migrate.js && node dist/server.js"]

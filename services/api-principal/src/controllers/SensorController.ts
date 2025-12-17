@@ -53,7 +53,7 @@ export class SensorController {
     }
   }
 
-  static async getAllSensors(req: Request, res: Response): Promise<void> {
+  static async getAllSensors(_req: Request, res: Response): Promise<void> {
     try {
       const sensors = await SensorModel.findAll();
       res.json({

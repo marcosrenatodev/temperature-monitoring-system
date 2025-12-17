@@ -234,11 +234,11 @@
         <div class="stats">
             <div class="stat-card">
                 <h3>Total Sensors</h3>
-                <div class="value">{sensors.length}</div>
+                <div class="value" id="stat-total-sensors">{sensors.length}</div>
             </div>
             <div class="stat-card">
                 <h3>Recent Alerts</h3>
-                <div class="value">{alerts.length}</div>
+                <div class="value" id="stat-recent-alerts">{alerts.length}</div>
             </div>
         </div>
 
@@ -303,11 +303,60 @@
         </div>
     </div>
 
+    <!--
+      TinyBone is a *client-side* View/Router layer built on RequireJS.
+      DO NOT `require('tinybone')` in Node (it will crash with `define is not defined`).
+    -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
     <script>
-        // Auto-refresh every 30 seconds
-        setTimeout(() => {
-            location.reload();
-        }, 30000);
+      require.config({
+        baseUrl: '/static',
+        paths: {
+          // served by Express from repo/vendor (dev) or dist/public/vendor (prod)
+          'tinybone': '/vendor/tinybone/base',
+
+          // CDN deps (UMD/AMD friendly)
+          'jquery': 'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min',
+          'lodash': 'https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min',
+          'dust.core': 'https://cdnjs.cloudflare.com/ajax/libs/dustjs-linkedin/2.7.5/dust-core.min',
+          'md5': 'https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.19.0/js/md5.min',
+          'jquery-cookie': 'https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min',
+
+          // TinyBone expects a module named "safe" (safejs). We ship a minimal compatible shim.
+          'safe': 'amd/safe'
+        },
+        shim: {
+          'md5': { exports: 'md5' },
+          'dust.core': { exports: 'dust' },
+          'jquery-cookie': { deps: ['jquery'] }
+        }
+      });
+
+      require(['tinybone', 'jquery'], function(tb, $) {
+        // TinyBone client router (Express-like) to demonstrate integration on the dashboard
+        var router = new tb.Router({ prefix: '' });
+
+        var refreshStats = function() {
+          fetch('/api/stats')
+            .then(function(r) { return r.json(); })
+            .then(function(payload) {
+              if (!payload || !payload.success) return;
+              var data = payload.data;
+              $('#stat-total-sensors').text(String(data.total_sensors));
+              $('#stat-recent-alerts').text(String(data.recent_alerts));
+              $('.timestamp').text('Last updated: ' + new Date().toISOString());
+            })
+            .catch(function() {});
+        };
+
+        router.get('/_refresh', function(req, res, next) {
+          refreshStats();
+          next();
+        });
+
+        refreshStats();
+        setInterval(function() { router.navigateTo('/_refresh', { replace: true }); }, 30000);
+      });
     </script>
 </body>
 </html>

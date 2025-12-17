@@ -1,84 +1,91 @@
-import amqp, { Connection, Channel, ConsumeMessage } from 'amqplib';
-import { logger } from './logger';
+import amqp, { type Channel, type ChannelModel, type ConsumeMessage } from 'amqplib'
+import { logger } from './logger'
 
-let connection: Connection | null = null;
-let channel: Channel | null = null;
+let channelModel: ChannelModel | null = null
+let channel: Channel | null = null
 
-const RABBITMQ_URL = `amqp://${process.env.RABBITMQ_USER}:${process.env.RABBITMQ_PASSWORD}@${process.env.RABBITMQ_HOST}:${process.env.RABBITMQ_PORT}`;
-const QUEUE_NAME = process.env.RABBITMQ_QUEUE_SENSOR_DATA || 'sensor_data';
+const RABBITMQ_URL = `amqp://${process.env.RABBITMQ_USER}:${process.env.RABBITMQ_PASSWORD}@${process.env.RABBITMQ_HOST}:${process.env.RABBITMQ_PORT}`
+const QUEUE_NAME = process.env.RABBITMQ_QUEUE_SENSOR_DATA || 'sensor_data'
 
 export const connectRabbitMQ = async (): Promise<void> => {
   try {
-    connection = await amqp.connect(RABBITMQ_URL);
-    channel = await connection.createChannel();
+    const conn = await amqp.connect(RABBITMQ_URL) // ✅ ChannelModel (conforme @types/amqplib)
+    const ch = await conn.createChannel()
 
-    await channel.assertQueue(QUEUE_NAME, {
-      durable: true
-    });
+    channelModel = conn
+    channel = ch
 
-    await channel.prefetch(1);
+    await ch.assertQueue(QUEUE_NAME, { durable: true })
+    await ch.prefetch(1)
 
-    logger.info(`Connected to RabbitMQ, queue: ${QUEUE_NAME}`);
+    logger.info(`Connected to RabbitMQ, queue: ${QUEUE_NAME}`)
 
-    connection.on('error', (err) => {
-      logger.error('RabbitMQ connection error:', err);
-    });
+    // Events no ChannelModel
+    conn.on('error', (err: unknown) => {
+      logger.error('RabbitMQ connection error:', err)
+    })
 
-    connection.on('close', () => {
-      logger.warn('RabbitMQ connection closed. Reconnecting...');
-      setTimeout(connectRabbitMQ, 5000);
-    });
-
+    conn.on('close', () => {
+      logger.warn('RabbitMQ connection closed. Reconnecting...')
+      setTimeout(connectRabbitMQ, 5000)
+    })
   } catch (error) {
-    logger.error('Failed to connect to RabbitMQ:', error);
-    setTimeout(connectRabbitMQ, 5000);
+    logger.error('Failed to connect to RabbitMQ:', error)
+    setTimeout(connectRabbitMQ, 5000)
   }
-};
+}
 
 export const consumeMessages = async (
   callback: (message: any) => Promise<void>
 ): Promise<void> => {
   try {
-    if (!channel) {
-      throw new Error('RabbitMQ channel not available');
-    }
+    if (!channel) throw new Error('RabbitMQ channel not available')
 
-    await channel.consume(
+    const ch = channel
+
+    await ch.consume(
       QUEUE_NAME,
       async (msg: ConsumeMessage | null) => {
-        if (!msg) return;
+        if (!msg) return
 
         try {
-          const content = msg.content.toString();
-          const message = JSON.parse(content);
+          const message = JSON.parse(msg.content.toString())
+          logger.info('Message received from queue', { message })
 
-          logger.info('Message received from queue', { message });
+          await callback(message)
 
-          await callback(message);
-
-          channel?.ack(msg);
-          logger.debug('Message acknowledged');
+          ch.ack(msg)
+          logger.debug('Message acknowledged')
         } catch (error) {
-          logger.error('Error processing message:', error);
-          channel?.nack(msg, false, false);
+          logger.error('Error processing message:', error)
+          ch.nack(msg, false, false)
         }
       },
       { noAck: false }
-    );
+    )
 
-    logger.info('Started consuming messages from queue');
+    logger.info('Started consuming messages from queue')
   } catch (error) {
-    logger.error('Failed to start consuming messages:', error);
-    throw error;
+    logger.error('Failed to start consuming messages:', error)
+    throw error
   }
-};
+}
 
 export const closeRabbitMQ = async (): Promise<void> => {
   try {
-    if (channel) await channel.close();
-    if (connection) await connection.close();
-    logger.info('RabbitMQ connection closed');
+    const ch = channel
+    const conn = channelModel
+
+    // zera primeiro pra evitar reuso em shutdown parcial
+    channel = null
+    channelModel = null
+
+    if (ch) await ch.close()
+    if (conn) await conn.close()
+
+    logger.info('RabbitMQ connection closed')
   } catch (error) {
-    logger.error('Error closing RabbitMQ connection:', error);
+    logger.error('Error closing RabbitMQ connection:', error)
   }
-};
+}
+

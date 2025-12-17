@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: postgres
+    container_name: postgres-mq
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -11,7 +11,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -37,8 +37,8 @@ services:
 
   api-principal:
     build:
-      context: ./services/api-principal
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/api-principal/Dockerfile
     container_name: api-principal
     environment:
       NODE_ENV: development

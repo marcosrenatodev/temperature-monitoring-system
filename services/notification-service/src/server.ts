@@ -1,13 +1,12 @@
 import 'express-async-errors';
+import express from 'express';
 import dotenv from 'dotenv';
+import http from 'http';
 
 dotenv.config();
 
 // IIFE Structure
 (function() {
-  const express = require('express');
-  const tinybone = require('tinybone');
-
   const { logger } = require('./config/logger');
   const pool = require('./config/database').default;
   const { connectRabbitMQ, consumeMessages, closeRabbitMQ } = require('./config/rabbitmq');
@@ -20,13 +19,13 @@ dotenv.config();
   app.use(express.json());
 
   // Request logging
-  app.use((req: any, res: any, next: any) => {
+  app.use((req: any, _res: any, next: any) => {
     logger.info(`${req.method} ${req.path}`);
     next();
   });
 
   // Health check
-  app.get('/health', (req: any, res: any) => {
+  app.get('/health', (_req: any, res: any) => {
     res.json({
       status: 'ok',
       service: 'notification-service',
@@ -35,7 +34,7 @@ dotenv.config();
   });
 
   // Stats endpoint
-  app.get('/api/stats', async (req: any, res: any) => {
+  app.get('/api/stats', async (_req: any, res: any) => {
     try {
       const alertsResult = await pool.query(
         `SELECT COUNT(*) as total_alerts FROM alerts`
@@ -62,7 +61,7 @@ dotenv.config();
   });
 
   // Error handling
-  app.use((err: any, req: any, res: any, next: any) => {
+  app.use((err: any, _req: any, res: any, _next: any) => {
     logger.error('Unhandled error:', err);
     res.status(500).json({
       success: false,
@@ -70,9 +69,8 @@ dotenv.config();
     });
   });
 
-  // TinyBone initialization
-  const server = tinybone();
-  server.use(app);
+  // Create HTTP server (TinyBone-compatible approach)
+  const server = http.createServer(app);
 
   // Database connection check
   const checkDatabase = async () => {
@@ -129,7 +127,7 @@ dotenv.config();
 
       server.listen(PORT, () => {
         logger.info('=================================');
-        logger.info(`🚀 Notification Service started`);
+        logger.info(`🚀 Notification Service started (Express)`);
         logger.info(`📡 Server: http://localhost:${PORT}`);
         logger.info(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
         logger.info(`📨 Listening for messages...`);

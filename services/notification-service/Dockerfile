@@ -6,8 +6,7 @@ WORKDIR /app
 COPY package*.json ./
 COPY tsconfig.json ./
 
-RUN npm ci --only=production && \
-    npm cache clean --force
+RUN npm ci && npm cache clean --force
 
 COPY src ./src
 
@@ -23,8 +22,7 @@ RUN addgroup -g 1001 -S nodejs && \
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --only=production && \
-    npm cache clean --force
+RUN npm ci --omit=dev && npm cache clean --force
 
 COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
 

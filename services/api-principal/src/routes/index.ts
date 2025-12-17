@@ -20,7 +20,7 @@ router.get('/api/sensors/:id/readings', SensorController.getSensorReadings);
 router.get('/api/sensors/:id/alerts', SensorController.getSensorAlerts);
 
 // Health check
-router.get('/health', (req, res) => {
+router.get('/health', (_req, res) => {
   res.json({ status: 'ok', service: 'api-principal', timestamp: new Date().toISOString() });
 });
 

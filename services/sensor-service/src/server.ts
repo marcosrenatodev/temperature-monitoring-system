@@ -1,13 +1,14 @@
 import 'express-async-errors';
+import express from 'express';
 import dotenv from 'dotenv';
+import http from 'http';
+ import path from 'path';
+ import fs from 'fs';
 
 dotenv.config();
 
 // IIFE Structure
 (function() {
-  const express = require('express');
-  const tinybone = require('tinybone');
-
   const { logger } = require('./config/logger');
   const { connectRabbitMQ, closeRabbitMQ } = require('./config/rabbitmq');
   const { SensorSimulator } = require('./services/SensorSimulator');
@@ -17,15 +18,28 @@ dotenv.config();
 
   // Middleware
   app.use(express.json());
+  // Static assets (TinyBone – client-side only)
+  const publicPath = path.join(__dirname, 'public')
+  if (fs.existsSync(publicPath)) {
+    app.use('/static', express.static(publicPath))
+  }
 
+  const tinybonePath = path.resolve(__dirname, '../../../vendor/tinybone')
+  if (fs.existsSync(tinybonePath)) {
+    app.use('/vendor/tinybone', express.static(tinybonePath))
+  }
+
+  app.get('/', (_, res) => {
+    res.sendFile(path.join(publicPath, 'index.html'))
+  })
   // Request logging
-  app.use((req: any, res: any, next: any) => {
+  app.use((req: any, _res: any, next: any) => {
     logger.info(`${req.method} ${req.path}`);
     next();
   });
 
   // Health check
-  app.get('/health', (req: any, res: any) => {
+  app.get('/health', (_req: any, res: any) => {
     res.json({
       status: 'ok',
       service: 'sensor-service',
@@ -34,7 +48,7 @@ dotenv.config();
   });
 
   // Error handling
-  app.use((err: any, req: any, res: any, next: any) => {
+  app.use((err: any, _req: any, res: any, _next: any) => {
     logger.error('Unhandled error:', err);
     res.status(500).json({
       success: false,
@@ -42,9 +56,8 @@ dotenv.config();
     });
   });
 
-  // TinyBone initialization
-  const server = tinybone();
-  server.use(app);
+  // Create HTTP server (TinyBone-compatible approach)
+  const server = http.createServer(app);
 
   let simulator: any = null;
 
@@ -82,7 +95,7 @@ dotenv.config();
 
       server.listen(PORT, () => {
         logger.info('=================================');
-        logger.info(`🚀 Sensor Service started`);
+        logger.info(`🚀 Sensor Service started (TinyBone/Express)`);
         logger.info(`📡 Server: http://localhost:${PORT}`);
         logger.info(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
         logger.info('=================================');
