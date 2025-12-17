@@ -17,10 +17,10 @@ cp .env.example .env
 
 ```bash
 # Build todas as imagens
-docker-compose build
+docker compose build
 
 # Suba todos os serviços
-docker-compose up -d
+docker compose up -d
 
 # Aguarde os serviços ficarem prontos (30-60 segundos)
 sleep 30
@@ -30,16 +30,16 @@ sleep 30
 
 ```bash
 # Todos devem estar "Up"
-docker-compose ps
+docker compose ps
 
 # Verificar logs (não deve ter erros críticos)
-docker-compose logs --tail=50
+docker compose logs --tail=50
 ```
 
 ### 1.4 Execute Migrations
 
 ```bash
-docker-compose exec api-principal npm run migrate
+docker compose exec api-principal npm run migrate
 ```
 
 **✅ Resultado esperado:**
@@ -122,7 +122,7 @@ curl -X POST http://localhost:3000/api/sensors \
 
 ```bash
 # Verifique logs do Sensor Service
-docker-compose logs sensor-service | tail -20
+docker compose logs sensor-service | tail -20
 ```
 
 **✅ Resultado esperado:**
@@ -148,7 +148,7 @@ curl http://localhost:3000/api/sensors/test-001/readings
 
 ```bash
 # Ver logs do Notification Service
-docker-compose logs notification-service | grep -i alert
+docker compose logs notification-service | grep -i alert
 
 # Ver alertas via API
 curl http://localhost:3000/api/sensors/test-001/alerts
@@ -177,7 +177,7 @@ open http://localhost:15672
 
 ```bash
 # Conectar ao banco
-docker-compose exec postgres psql -U admin -d temperature_monitoring
+docker compose exec postgres psql -U admin -d temperature_monitoring
 
 # Ver tabelas
 \dt
@@ -219,7 +219,7 @@ minikube status
 eval $(minikube docker-env)
 
 # Build
-docker build -t api-principal:latest ./services/api-principal
+docker build -t api-principal:latest -f services/api-principal/Dockerfile .
 docker build -t sensor-service:latest ./services/sensor-service
 docker build -t notification-service:latest ./services/notification-service
 
@@ -488,7 +488,7 @@ ab -n 1000 -c 10 http://localhost:3000/health
 
 ### Docker Compose
 
-- [ ] `docker-compose up` funciona sem erros
+- [ ] `docker compose up` funciona sem erros
 - [ ] Todos containers ficam "Up" e healthy
 - [ ] Migrations executam com sucesso
 - [ ] Dashboard carrega em http://localhost:3000
