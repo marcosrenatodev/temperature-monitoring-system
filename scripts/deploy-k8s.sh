@@ -2,6 +2,7 @@
 set -e
 
 echo "☸️  Deploying to Kubernetes..."
+echo "Ensure that minikube has been started with something like: 'minikube start --cpus=4 --memory=2048'"
 
 # Create namespace
 echo "Creating namespace..."

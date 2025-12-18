@@ -175,7 +175,7 @@ minikube addons enable ingress
 ### Passo 2: Build e Push das Imagens Docker
 
 ```bash
-# Configure o registry do Docker (exemplo com Docker Hub)
+# Configure o registry do Docker
 export DOCKER_REGISTRY=your-dockerhub-username
 
 # Build das imagens
@@ -203,16 +203,7 @@ docker build -t notification-service:latest ./services/notification-service
 
 ### Passo 3: Atualizar Kubernetes Manifests
 
-Edite os arquivos de deployment e substitua `your-docker-registry` pelo seu registry real:
-
-```bash
-# Substitua em todos os arquivos
-sed -i 's/your-docker-registry/seu-usuario/g' kubernetes/api-principal/deployment.yaml
-sed -i 's/your-docker-registry/seu-usuario/g' kubernetes/sensor-service/deployment.yaml
-sed -i 's/your-docker-registry/seu-usuario/g' kubernetes/notification-service/deployment.yaml
-```
-
-Se estiver usando Minikube local, remova a referência ao registry:
+Se estiver usando Minikube local
 
 ```yaml
 image: api-principal:latest
@@ -492,7 +483,6 @@ kubectl exec -it deployment/api-principal -n temperature-monitoring -- npm run m
 
 - Containers rodando com usuários não-root (UID 1001)
 - Secrets do Kubernetes para credenciais
-- Network policies (pode ser implementado)
 - Resource limits configurados
 
 ## 📝 Notas Adicionais
@@ -501,16 +491,3 @@ kubectl exec -it deployment/api-principal -n temperature-monitoring -- npm run m
 - 10% das leituras excedem propositalmente os limites para testar alertas
 - O Dashboard auto-refresh a cada 30 segundos
 - Todas as réplicas podem processar mensagens do RabbitMQ simultaneamente
-
-## 👥 Contribuindo
-
-Para contribuir:
-1. Fork o projeto
-2. Crie uma branch para sua feature
-3. Commit suas mudanças
-4. Push para a branch
-5. Abra um Pull Request
-
-## 📄 Licença
-
-MIT License - veja LICENSE para detalhes

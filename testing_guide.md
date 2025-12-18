@@ -203,7 +203,7 @@ SELECT * FROM alerts ORDER BY created_at DESC LIMIT 10;
 
 ```bash
 # Iniciar cluster
-minikube start --cpus=4 --memory=4096
+minikube start --cpus=4 --memory=2048
 
 # Habilitar ingress
 minikube addons enable ingress
@@ -469,99 +469,18 @@ echo "🎉 All E2E tests passed!"
 ### 3.2 Teste de Carga (Opcional)
 
 ```bash
-# Instalar Apache Bench (se necessário)
-# macOS: já vem instalado
+# Instalar Apache Bench
 # Ubuntu: sudo apt-get install apache2-utils
 
 # Teste de carga
 ab -n 1000 -c 10 http://localhost:3000/health
 
-# Resultado esperado:
-# - Requests per second > 100
-# - 100% success rate
-# - Mean time per request < 100ms
 ```
 
 ---
 
-## 4. Checklist Final de Validação
 
-### Docker Compose
-
-- [ ] `docker compose up` funciona sem erros
-- [ ] Todos containers ficam "Up" e healthy
-- [ ] Migrations executam com sucesso
-- [ ] Dashboard carrega em http://localhost:3000
-- [ ] Sensor pode ser criado via API
-- [ ] Leituras aparecem após 5-10 segundos
-- [ ] Alertas são gerados quando limites excedem
-- [ ] RabbitMQ Management acessível em http://localhost:15672
-- [ ] Fila "sensor_data" existe e processa mensagens
-- [ ] PostgreSQL persistindo dados
-- [ ] Logs não mostram erros críticos
-
-### Kubernetes
-
-- [ ] `kubectl apply` de todos manifests funciona
-- [ ] Todos pods ficam "Running"
-- [ ] Migrations executam via initContainer ou manual
-- [ ] Port-forward permite acessar dashboard
-- [ ] Sensores podem ser criados
-- [ ] Leituras são geradas e processadas
-- [ ] Alertas funcionam
-- [ ] Scaling funciona (aumentar réplicas)
-- [ ] Pods se recuperam após delete (resiliência)
-- [ ] Ingress funciona (se configurado)
-- [ ] Resources limits configurados
-- [ ] Probes funcionando
-
-### Qualidade do Código
-
-- [ ] TypeScript compila sem erros
-- [ ] Código organizado e modular
-- [ ] Tratamento de erros implementado
-- [ ] Logging estruturado em todos serviços
-- [ ] Dockerfiles com non-root user
-- [ ] Sem credenciais hardcoded
-- [ ] .gitignore configurado corretamente
-
-### Documentação
-
-- [ ] README completo e claro
-- [ ] Instruções de instalação testadas
-- [ ] Exemplos de API funcionam
-- [ ] Arquitetura documentada
-- [ ] Troubleshooting útil
-
----
-
-## 5. Métricas de Sucesso
-
-### Performance
-
-- API responde em < 100ms para requests simples
-- Dashboard carrega em < 2 segundos
-- Sensor Service publica 1 leitura a cada 5 segundos por sensor
-- Notification Service processa mensagens em < 1 segundo
-- Banco suporta 100+ sensores sem degradação
-
-### Confiabilidade
-
-- Zero erros em operação normal
-- Recuperação automática de falhas
-- Mensagens não são perdidas (durability do RabbitMQ)
-- Dados persistem após restart
-
-### Escalabilidade
-
-- Múltiplas réplicas funcionam sem conflito
-- Load balancing entre réplicas
-- Performance não degrada com mais réplicas
-- Horizontal scaling testado
-
----
-
-## 6. Comandos Rápidos de Teste
+## 4. Comandos Rápidos de Teste
 
 ```bash
 # Test everything locally
@@ -571,7 +490,7 @@ ab -n 1000 -c 10 http://localhost:3000/health
 ./scripts/seed-data.sh
 
 # Watch logs
-./scripts/logs.sh all
+./scripts/logs.sh all k8s
 
 # Scale service
 ./scripts/scale.sh api-principal 5
@@ -580,22 +499,3 @@ ab -n 1000 -c 10 http://localhost:3000/health
 ./scripts/port-forward.sh
 ```
 
----
-
-## ✅ Status Final
-
-Após completar todos os testes:
-
-```
-✅ Docker Compose funcionando
-✅ Kubernetes deploy funcionando
-✅ Todos microserviços comunicando
-✅ RabbitMQ processando mensagens
-✅ PostgreSQL persistindo dados
-✅ Dashboard renderizando corretamente
-✅ Alertas sendo gerados
-✅ Escalabilidade testada
-✅ Documentação completa
-```
-
-**🎉 Projeto pronto para entrega!**
