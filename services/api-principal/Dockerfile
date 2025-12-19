@@ -8,7 +8,7 @@ COPY services/api-principal/package*.json ./
 COPY services/api-principal/tsconfig.json ./
 
 # Install dependencies
-RUN npm ci && npm cache clean --force
+RUN npm install && npm cache clean --force
 
 # Copy source code
 COPY services/api-principal/src ./src
@@ -28,7 +28,7 @@ WORKDIR /app
 
 # Copy package files and install production dependencies only
 COPY services/api-principal/package*.json ./
-RUN npm ci --omit=dev && npm cache clean --force
+RUN npm install --omit=dev && npm cache clean --force
 
 # Copy built application from builder stage
 COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist

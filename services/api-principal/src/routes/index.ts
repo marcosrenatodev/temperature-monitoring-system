@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { SensorController } from '../controllers/SensorController';
 import { DashboardController } from '../controllers/DashboardController';
+import { validateBody } from '../middlewares/validateZod';
+import { createSensorBodySchema } from '../validators/sensorSchemas';
 
 const router = Router();
 
@@ -9,7 +11,7 @@ router.get('/', DashboardController.renderDashboard);
 router.get('/api/stats', DashboardController.getStats);
 
 // Sensor routes
-router.post('/api/sensors', SensorController.createSensor);
+router.post('/api/sensors', validateBody(createSensorBodySchema), SensorController.createSensor);
 router.get('/api/sensors', SensorController.getAllSensors);
 router.get('/api/sensors/:id', SensorController.getSensorById);
 router.put('/api/sensors/:id', SensorController.updateSensor);

@@ -3,20 +3,22 @@ import { SensorModel, ISensor } from '../models/Sensor';
 import { ReadingModel } from '../models/Reading';
 import { AlertModel } from '../models/Alert';
 import { logger } from '../config/logger';
+import { createSensorBodySchema, type CreateSensorBody } from '../validators/sensorSchemas';
 
 export class SensorController {
   static async createSensor(req: Request, res: Response): Promise<void> {
     try {
-      const { sensor_id, name, location, min_temperature, max_temperature, min_humidity, max_humidity } = req.body;
-
-      if (!sensor_id || !name || min_temperature === undefined || max_temperature === undefined ||
-          min_humidity === undefined || max_humidity === undefined) {
-        res.status(400).json({
-          success: false,
-          error: 'Missing required fields'
-        });
-        return;
-      }
+      const body: CreateSensorBody = createSensorBodySchema.parse(req.body);
+      const {
+        sensor_id,
+        name,
+        location,
+        min_temperature,
+        max_temperature,
+        min_humidity,
+        max_humidity,
+        active,
+      } = body;
 
       const existing = await SensorModel.findById(sensor_id);
       if (existing) {
@@ -31,10 +33,11 @@ export class SensorController {
         sensor_id,
         name,
         location,
-        min_temperature: parseFloat(min_temperature),
-        max_temperature: parseFloat(max_temperature),
-        min_humidity: parseFloat(min_humidity),
-        max_humidity: parseFloat(max_humidity)
+        min_temperature,
+        max_temperature,
+        min_humidity,
+        max_humidity,
+        active
       };
 
       const created = await SensorModel.create(sensor);

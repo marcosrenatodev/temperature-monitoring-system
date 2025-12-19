@@ -69,7 +69,6 @@ dotenv.config();
     });
   });
 
-  // Create HTTP server (TinyBone-compatible approach)
   const server = http.createServer(app);
 
   // Database connection check

@@ -49,10 +49,10 @@ export const consumeMessages = async (
         if (!msg) return
 
         try {
-          const message = JSON.parse(msg.content.toString())
-          logger.info('Message received from queue', { message })
+          const payload = JSON.parse(msg.content.toString())
+          logger.info('Message received from queue', { payload })
 
-          await callback(message)
+          await callback(payload)
 
           ch.ack(msg)
           logger.debug('Message acknowledged')

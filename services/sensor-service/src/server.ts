@@ -2,8 +2,6 @@ import 'express-async-errors';
 import express from 'express';
 import dotenv from 'dotenv';
 import http from 'http';
- import path from 'path';
- import fs from 'fs';
 
 dotenv.config();
 
@@ -16,22 +14,8 @@ dotenv.config();
   const app = express();
   const PORT = process.env.SENSOR_SERVICE_PORT || 3001;
 
-  // Middleware
   app.use(express.json());
-  // Static assets (TinyBone – client-side only)
-  const publicPath = path.join(__dirname, 'public')
-  if (fs.existsSync(publicPath)) {
-    app.use('/static', express.static(publicPath))
-  }
 
-  const tinybonePath = path.resolve(__dirname, '../../../vendor/tinybone')
-  if (fs.existsSync(tinybonePath)) {
-    app.use('/vendor/tinybone', express.static(tinybonePath))
-  }
-
-  app.get('/', (_, res) => {
-    res.sendFile(path.join(publicPath, 'index.html'))
-  })
   // Request logging
   app.use((req: any, _res: any, next: any) => {
     logger.info(`${req.method} ${req.path}`);
@@ -56,7 +40,6 @@ dotenv.config();
     });
   });
 
-  // Create HTTP server (TinyBone-compatible approach)
   const server = http.createServer(app);
 
   let simulator: any = null;
@@ -95,7 +78,7 @@ dotenv.config();
 
       server.listen(PORT, () => {
         logger.info('=================================');
-        logger.info(`🚀 Sensor Service started (TinyBone/Express)`);
+        logger.info(`🚀 Sensor Service started (Express)`);
         logger.info(`📡 Server: http://localhost:${PORT}`);
         logger.info(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
         logger.info('=================================');
