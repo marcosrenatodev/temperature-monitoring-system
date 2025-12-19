@@ -90,7 +90,7 @@ Este sistema simula o monitoramento de sensores de temperatura e umidade, proces
 ### 1. Clone o Repositório
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/marcosrenatodev/temperature-monitoring-system
 cd temperature-monitoring-system
 ```
 
