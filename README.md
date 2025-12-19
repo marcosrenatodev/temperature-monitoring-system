@@ -179,14 +179,14 @@ minikube addons enable ingress
 export DOCKER_REGISTRY=your-dockerhub-username
 
 # Build das imagens
-docker build -t $DOCKER_REGISTRY/api-principal:latest ./services/api-principal
-docker build -t $DOCKER_REGISTRY/sensor-service:latest ./services/sensor-service
-docker build -t $DOCKER_REGISTRY/notification-service:latest ./services/notification-service
+docker build -t $api-principal:latest ./services/api-principal
+docker build -t $sensor-service:latest ./services/sensor-service
+docker build -t $notification-service:latest ./services/notification-service
 
 # Push para o registry
-docker push $DOCKER_REGISTRY/api-principal:latest
-docker push $DOCKER_REGISTRY/sensor-service:latest
-docker push $DOCKER_REGISTRY/notification-service:latest
+docker push $api-principal:latest
+docker push $sensor-service:latest
+docker push $notification-service:latest
 ```
 
 **Nota**: Se usar Minikube localmente, você pode usar o Docker daemon do Minikube:
