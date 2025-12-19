@@ -17,23 +17,32 @@ export function createApp() {
 
   const app = express();
 
-  // --- Static assets (TinyBone is client-side: served to the browser, never required in Node) ---
-  // In dev (ts-node), __dirname points to /src. In prod (dist), __dirname points to /dist.
-  const staticPublicPath = path.join(__dirname, 'public');
-  if (fs.existsSync(staticPublicPath)) {
+  // Resolve static public dir in both dev (src) and prod (dist)
+  const staticCandidates = [
+    path.join(process.cwd(), 'dist', 'public'),
+    path.join(process.cwd(), 'src', 'public'),
+    path.join(process.cwd(), 'public'),
+    path.join(__dirname, 'public'),
+  ];
+  const staticPublicPath = staticCandidates.find((p) => fs.existsSync(p));
+  if (staticPublicPath) {
     app.use('/static', express.static(staticPublicPath));
+  } else {
+    logger.warn('Static public directory not found. /static will not be served.');
   }
 
-  // TinyBone vendor path:
-  // - dev: repo-root/vendor/tinybone
-  // - prod: dist/public/vendor/tinybone (copied by Dockerfile)
-  const repoRootVendorTinybone = path.resolve(__dirname, '../../../vendor/tinybone');
-  const distVendorTinybone = path.join(staticPublicPath, 'vendor', 'tinybone');
-  const tinybonePath = fs.existsSync(distVendorTinybone)
-  ? distVendorTinybone
-  : (fs.existsSync(repoRootVendorTinybone) ? repoRootVendorTinybone : null);
+  // TinyBone vendor dir (prefer process.cwd(), works in docker where vendor is copied to /app/vendor)
+  const tinyboneCandidates = [
+    path.join(process.cwd(), 'vendor', 'tinybone'),
+    staticPublicPath ? path.join(staticPublicPath, 'vendor', 'tinybone') : null,
+    path.resolve(__dirname, '../../../vendor/tinybone'),
+  ].filter(Boolean) as string[];
+
+  const tinybonePath = tinyboneCandidates.find((p) => fs.existsSync(p)) || null;
   if (tinybonePath) {
     app.use('/vendor/tinybone', express.static(tinybonePath));
+  } else {
+    logger.warn('TinyBone directory not found. /vendor/tinybone will not be served.');
   }
 
   // Middleware
